@@ -8,14 +8,14 @@ from tensorflow.keras.callbacks import TensorBoard
 import argparse
 
 import octobot_commons.symbols as symbols
-import octobot_script as obs
+import alea_ai_bot as aab
 
 async def basic_evaluation_function(ctx):
-    closes = await obs.Close(ctx, max_history=True)
-    open = await obs.Open(ctx, limit=30)
-    high = await obs.High(ctx, limit=30)
-    low = await obs.Low(ctx, limit=30)
-    vol = await obs.Volume(ctx, limit=30)
+    closes = await aab.Close(ctx, max_history=True)
+    open = await aab.Open(ctx, limit=30)
+    high = await aab.High(ctx, limit=30)
+    low = await aab.Low(ctx, limit=30)
+    vol = await aab.Volume(ctx, limit=30)
     rsi_v = tulipy.rsi(closes, period=10)
     ema_values = tulipy.ema(closes, period=21)
 
@@ -55,7 +55,7 @@ async def run_strategy(data, env, agent, symbol, time_frame, is_training=False, 
             agent.remember(state, action, reward, next_state, done)  
 
     # Run a backtest using the above data, strategy and configuration.
-    res = await obs.run(data, strategy, {}, enable_logs=False)
+    res = await aab.run(data, strategy, {}, enable_logs=False)
 
     if plot:
         print(res.describe())
@@ -86,11 +86,11 @@ def main():
     timestamp = time.strftime('%Y%m%d%H%M')
     symbol = symbols.parse_symbol(args.symbol)
     time_frame = args.timeframe
-    data = asyncio.run(obs.get_data(symbol.merged_str_symbol(), time_frame, exchange=args.exchange, start_timestamp=int(float(str((datetime.now() - timedelta(days=args.days)).timestamp()))))) # start_timestamp=1505606400
+    data = asyncio.run(aab.get_data(symbol.merged_str_symbol(), time_frame, exchange=args.exchange, start_timestamp=int(float(str((datetime.now() - timedelta(days=args.days)).timestamp()))))) # start_timestamp=1505606400
 
     action_size = 9
     gym_env = gym.make(action_size=action_size, id='TradingEnv', name= "test", dynamic_feature_functions=[basic_evaluation_function], traded_symbols=[symbol])
-    agent = obs.DQNAgent(action_size)
+    agent = aab.DQNAgent(action_size)
 
     logdir = "tensorboard_logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = TensorBoard(log_dir=logdir, histogram_freq=1, write_images=False, batch_size=args.batch_size)
